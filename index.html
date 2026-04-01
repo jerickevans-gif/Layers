@@ -33,6 +33,8 @@
       --plum: #CE93D8;
       --sage: #A5D6A7;
       --sage-glow: rgba(165, 214, 167, 0.2);
+      --honey: #FFB74D;
+      --honey-glow: rgba(255, 183, 77, 0.2);
       --radius: 24px;
       --radius-pill: 50px;
     }
@@ -209,6 +211,7 @@
     .div-compass { background: var(--sky); }
     .div-senses { background: var(--rose); }
     .div-chapters { background: var(--lavender); }
+    .div-seeking { background: var(--honey); }
     .div-now { background: var(--sage); }
 
     .facet-tag {
@@ -225,6 +228,7 @@
     .tag-compass { background: var(--sky-glow); color: var(--sky); }
     .tag-senses { background: var(--rose-glow); color: var(--rose); }
     .tag-chapters { background: var(--lavender-glow); color: var(--lavender); }
+    .tag-seeking { background: var(--honey-glow); color: var(--honey); }
     .tag-now { background: var(--sage-glow); color: var(--sage); }
 
     .section-title {
@@ -629,6 +633,7 @@
     <div class="side-dot" data-section="compass" data-label="Compass"></div>
     <div class="side-dot" data-section="senses" data-label="Senses"></div>
     <div class="side-dot" data-section="chapters" data-label="Chapters"></div>
+    <div class="side-dot" data-section="seeking" data-label="Seeking"></div>
     <div class="side-dot" data-section="now" data-label="Now"></div>
   </nav>
 
@@ -735,11 +740,22 @@
       <div class="facet-body reveal reveal-delay-3" id="body-chapters"></div>
     </section>
 
+    <!-- SEEKING -->
+    <div class="section-divider div-seeking"></div>
+    <section class="section" id="seeking" data-facet="seeking">
+      <div class="section-glow" style="background:var(--honey);top:-40px;right:-80px;opacity:0.08;"></div>
+      <div class="reveal"><span class="facet-tag tag-seeking">07 / Seeking</span></div>
+      <h2 class="section-title reveal reveal-delay-1">What I'm<br>Looking For</h2>
+      <p class="section-sub reveal reveal-delay-2">Honest about what I want. Clear about what I need.</p>
+      <button class="choose-prompts-btn reveal reveal-delay-3" data-facet="seeking">Choose your 5 prompts</button>
+      <div class="facet-body reveal reveal-delay-3" id="body-seeking"></div>
+    </section>
+
     <!-- RIGHT NOW -->
     <div class="section-divider div-now"></div>
     <section class="section" id="now">
       <div class="section-glow" style="background:var(--sage);bottom:-40px;right:-60px;opacity:0.1;"></div>
-      <div class="reveal"><span class="facet-tag tag-now">07 / Right Now</span></div>
+      <div class="reveal"><span class="facet-tag tag-now">08 / Right Now</span></div>
       <h2 class="section-title reveal reveal-delay-1">Today's<br>Version</h2>
       <p class="section-sub reveal reveal-delay-2">What I'm into right this minute.</p>
       <div class="now-grid reveal reveal-delay-3">
@@ -925,6 +941,33 @@
         "The day I stopped pretending",
         "A tradition I started",
         "The version of me I left behind"
+      ],
+      seeking: [
+        "What I'm looking for in a partner",
+        "My non-negotiables",
+        "What I bring to a relationship",
+        "How I show up as a partner",
+        "My attachment style",
+        "What I need from a partner",
+        "How I handle conflict",
+        "What intimacy means to me",
+        "The conversation most people avoid",
+        "What I won't tolerate",
+        "How I define commitment",
+        "What I find attractive beyond the physical",
+        "My ideal Sunday with a partner",
+        "How I communicate love",
+        "What scares me about relationships",
+        "The dynamic I'm looking for",
+        "What I've learned about myself through love",
+        "How I handle distance or space",
+        "What trust looks like in a relationship",
+        "The kind of home I want to build with someone",
+        "How I grow with a partner",
+        "What I need to feel safe",
+        "My relationship with vulnerability in love",
+        "What I'm done settling for",
+        "The love I know I deserve"
       ]
     };
 
@@ -986,6 +1029,16 @@
           11: { year: "2012\u20132016", title: "Traveled the world every summer on a shoestring", desc: "45 countries and counting. Slept on trains, ate street food, got lost on purpose. Discovered that the world is smaller and kinder than anyone tells you." },
           12: { year: "2021\u20132023", title: "M.Des + MBA at IIT in Chicago", desc: "Design school and business school at the same time. Fell in love with Chicago\u2019s art and music scene. Learned to think in systems." },
           20: { year: "2026", title: "Springfield, MO \u2014 startup life and AI", desc: "Working at a startup, getting a firsthand look at what AI tools can actually do. Building, learning, experimenting every day." }
+        }
+      },
+      seeking: {
+        selected: [1, 8, 5, 23, 24],
+        responses: {
+          1: "I want to be the real me, and you the real you. If we fit, we fit. If not, at least we aren\u2019t wearing masks.",
+          8: "Honest conversations about boundaries, effort, and emotional availability. I know from experience that being able to say that out loud \u2014 and hear it back \u2014 is what keeps a relationship real instead of slowly falling apart.",
+          5: "Someone who\u2019s curious about the world and honest about themselves. Who can sit across from me and say the real thing, not the easy thing. Who has their own life and wants to share it, not merge it.",
+          23: "Going through the motions. Relationships where no one says what they actually feel. Half-in, half-out energy. I\u2019d rather be alone and growing than together and pretending.",
+          24: "The kind where we make each other braver. Where honesty isn\u2019t a risk, it\u2019s the foundation. Where we\u2019re building something on purpose \u2014 not just falling into something convenient."
         }
       }
     };
@@ -1101,7 +1154,7 @@
 
     const FACET_LABELS = {
       roots: 'Roots', edges: 'Edges', fire: 'Fire',
-      compass: 'Compass', senses: 'Senses', chapters: 'Chapters'
+      compass: 'Compass', senses: 'Senses', chapters: 'Chapters', seeking: 'Seeking'
     };
 
     function openPicker(facetKey) {
