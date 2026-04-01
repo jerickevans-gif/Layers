@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Layers — Jerick Evans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,800;1,9..144,300;1,9..144,500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0F0E13;
+      --surface: #1A1820;
+      --white: #FAFAF9;
+      --white-60: rgba(250, 250, 249, 0.6);
+      --white-30: rgba(250, 250, 249, 0.3);
+      --white-10: rgba(250, 250, 249, 0.1);
+      --white-05: rgba(250, 250, 249, 0.05);
+      --coral: #FF6B6B;
+      --coral-glow: rgba(255, 107, 107, 0.2);
+      --peach: #FFAB91;
+      --gold: #FFD93D;
+      --gold-glow: rgba(255, 217, 61, 0.2);
+      --mint: #6BCB77;
+      --sky: #4FC3F7;
+      --sky-glow: rgba(79, 195, 247, 0.2);
+      --lavender: #B39DDB;
+      --lavender-glow: rgba(179, 157, 219, 0.2);
+      --rose: #F48FB1;
+      --rose-glow: rgba(244, 143, 177, 0.2);
+      --plum: #CE93D8;
+      --sage: #A5D6A7;
+      --sage-glow: rgba(165, 214, 167, 0.2);
+      --radius: 24px;
+      --radius-pill: 50px;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+      scroll-padding-top: 68px;
+    }
+
+    body {
+      font-family: 'Space Grotesk', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    /* ===== TOPBAR (sticky) ===== */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 20px;
+      background: rgba(15, 14, 19, 0.85);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      z-index: 50;
+      border-bottom: 1px solid var(--white-05);
+    }
+
+    .topbar-logo {
+      font-family: 'Fraunces', serif; font-weight: 800;
+      font-size: 1.25rem; letter-spacing: -0.02em;
+    }
+
+    .topbar-logo span { color: var(--coral); }
+    .topbar-actions { display: flex; gap: 8px; }
+
+    .btn-icon {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--white-05); border: 1px solid var(--white-10);
+      color: var(--white-60);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-icon:hover { background: var(--white-10); color: var(--white); }
+    .btn-icon.active { background: var(--coral); color: var(--white); border-color: var(--coral); }
+    .btn-icon svg { width: 17px; height: 17px; }
+
+    /* ===== SIDE NAV ===== */
+    .side-nav {
+      position: fixed; right: 14px; top: 50%; transform: translateY(-50%);
+      z-index: 40; display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .side-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--white-10); cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+
+    .side-dot::before {
+      content: attr(data-label);
+      position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+      font-size: 0.6rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; white-space: nowrap;
+      color: var(--white-30);
+      opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    }
+
+    .side-dot:hover::before { opacity: 1; }
+    .side-dot.active { background: var(--coral); transform: scale(1.5); }
+
+    @media (max-width: 480px) { .side-nav { display: none; } }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 100svh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 80px 24px 60px;
+      position: relative; overflow: hidden;
+      scroll-snap-align: start;
+    }
+
+    .hero-glow {
+      position: absolute; width: 300px; height: 300px;
+      border-radius: 50%; filter: blur(100px); pointer-events: none;
+    }
+
+    .hero-glow-1 { background: var(--coral); top: -80px; right: -80px; opacity: 0.12; }
+    .hero-glow-2 { background: var(--lavender); bottom: -40px; left: -80px; opacity: 0.08; }
+
+    .hero-avatar {
+      width: 130px; height: 130px;
+      border-radius: 36% 64% 55% 45% / 55% 35% 65% 45%;
+      background: linear-gradient(135deg, var(--coral), var(--lavender));
+      margin-bottom: 28px;
+      animation: blob 8s ease-in-out infinite;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Fraunces', serif; font-size: 3.2rem; font-weight: 300;
+      color: var(--white); position: relative; z-index: 1;
+    }
+
+    @keyframes blob {
+      0%, 100% { border-radius: 36% 64% 55% 45% / 55% 35% 65% 45%; }
+      25% { border-radius: 55% 45% 35% 65% / 45% 55% 45% 55%; }
+      50% { border-radius: 45% 55% 65% 35% / 35% 65% 55% 45%; }
+      75% { border-radius: 65% 35% 45% 55% / 55% 45% 35% 65%; }
+    }
+
+    .hero-name {
+      font-family: 'Fraunces', serif; font-weight: 800;
+      font-size: 3rem; line-height: 1; letter-spacing: -0.03em;
+      margin-bottom: 12px; position: relative; z-index: 1;
+    }
+
+    .hero-tagline {
+      font-size: 1.1rem; color: var(--white-60); font-weight: 300;
+      font-style: italic; font-family: 'Fraunces', serif;
+      line-height: 1.5; margin-bottom: 36px; max-width: 320px;
+      position: relative; z-index: 1;
+    }
+
+    .hero-stats { display: flex; gap: 32px; position: relative; z-index: 1; }
+    .hero-stat { text-align: center; }
+    .hero-stat-value { font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.6rem; color: var(--coral); }
+    .hero-stat-label { font-size: 0.65rem; color: var(--white-30); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 2px; }
+
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      font-size: 0.65rem; color: var(--white-30);
+      letter-spacing: 0.15em; text-transform: uppercase;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .scroll-hint svg { width: 18px; height: 18px; stroke: var(--white-30); }
+
+    @keyframes float {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ===== SECTION ===== */
+    .section {
+      padding: 100px 24px 80px;
+      max-width: 520px;
+      margin: 0 auto;
+      position: relative;
+      min-height: 100svh;
+      scroll-snap-align: start;
+      scroll-margin-top: 68px;
+    }
+
+    .section-glow {
+      position: absolute; width: 250px; height: 250px;
+      border-radius: 50%; filter: blur(100px);
+      pointer-events: none; z-index: 0;
+    }
+
+    .section-divider {
+      display: none;
+    }
+
+    .div-roots { background: var(--coral); }
+    .div-edges { background: var(--peach); }
+    .div-fire { background: var(--gold); }
+    .div-compass { background: var(--sky); }
+    .div-senses { background: var(--rose); }
+    .div-chapters { background: var(--lavender); }
+    .div-now { background: var(--sage); }
+
+    .facet-tag {
+      display: inline-block;
+      font-size: 0.65rem; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: var(--radius-pill);
+      margin-bottom: 16px;
+    }
+
+    .tag-roots { background: var(--coral-glow); color: var(--coral); }
+    .tag-edges { background: rgba(255,171,145,0.15); color: var(--peach); }
+    .tag-fire { background: var(--gold-glow); color: var(--gold); }
+    .tag-compass { background: var(--sky-glow); color: var(--sky); }
+    .tag-senses { background: var(--rose-glow); color: var(--rose); }
+    .tag-chapters { background: var(--lavender-glow); color: var(--lavender); }
+    .tag-now { background: var(--sage-glow); color: var(--sage); }
+
+    .section-title {
+      font-family: 'Fraunces', serif; font-weight: 800;
+      font-size: 2.6rem; line-height: 1.05;
+      letter-spacing: -0.03em; margin-bottom: 8px;
+      position: relative; z-index: 1;
+    }
+
+    .section-sub {
+      font-size: 0.95rem; color: var(--white-60);
+      font-weight: 300; line-height: 1.5; margin-bottom: 32px;
+      position: relative; z-index: 1;
+    }
+
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0; transform: translateY(40px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ===== INNER CARDS ===== */
+    .inner-card {
+      background: var(--white-05);
+      border: 1px solid var(--white-10);
+      border-radius: 18px; padding: 18px 20px;
+      margin-bottom: 12px;
+      position: relative; z-index: 1;
+    }
+
+    .inner-card-label {
+      font-size: 0.6rem; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--white-30);
+      margin-bottom: 6px; font-weight: 600;
+    }
+
+    .inner-card-text {
+      font-family: 'Fraunces', serif; font-size: 1.15rem;
+      font-weight: 500; line-height: 1.35; color: var(--white);
+    }
+
+    .inner-card-response {
+      font-size: 0.95rem; line-height: 1.6; color: var(--white);
+      min-height: 1.4em;
+    }
+
+    /* ===== STRENGTH BARS ===== */
+    .strength { margin-bottom: 20px; position: relative; z-index: 1; }
+    .strength-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .strength-name { font-size: 0.9rem; font-weight: 500; }
+    .strength-track { height: 6px; background: var(--white-05); border-radius: 3px; overflow: hidden; }
+
+    .strength-bar {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--peach));
+      width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .section.visible .strength-bar { width: var(--w); }
+
+    /* ===== TIMELINE ===== */
+    .timeline { padding-left: 20px; position: relative; z-index: 1; }
+
+    .timeline::before {
+      content: ''; position: absolute; left: 4px; top: 6px; bottom: 6px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--lavender), var(--lavender-glow), transparent);
+    }
+
+    .tl-item { position: relative; margin-bottom: 28px; }
+
+    .tl-item::before {
+      content: ''; position: absolute; left: -20px; top: 7px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--lavender); box-shadow: 0 0 12px var(--lavender-glow);
+    }
+
+    .tl-year { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; color: var(--lavender); margin-bottom: 2px; }
+    .tl-title { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+    .tl-desc { font-size: 0.85rem; color: var(--white-60); line-height: 1.5; }
+
+    /* ===== NOW GRID ===== */
+    .now-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: relative; z-index: 1; }
+
+    .now-cell {
+      background: var(--white-05); border: 1px solid var(--white-10);
+      border-radius: 18px; padding: 16px;
+    }
+
+    .now-emoji { font-size: 1.4rem; margin-bottom: 8px; }
+    .now-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--white-30); margin-bottom: 4px; font-weight: 600; }
+    .now-value { font-size: 0.85rem; font-weight: 500; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center; padding: 80px 24px 48px;
+      color: var(--white-30); font-size: 0.8rem;
+      scroll-snap-align: end;
+    }
+
+    .footer-logo {
+      font-family: 'Fraunces', serif; font-weight: 800;
+      font-size: 1.2rem; color: var(--white-60); margin-bottom: 6px;
+    }
+
+    .footer-logo span { color: var(--coral); }
+
+    /* ===== EDIT MODE ===== */
+    .edit-banner {
+      position: fixed; top: 54px; left: 0; right: 0;
+      background: var(--coral); color: var(--white);
+      text-align: center; padding: 6px;
+      font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      z-index: 49;
+      transform: translateY(-100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body.editing .edit-banner { transform: translateY(0); }
+
+    .editable { position: relative; }
+
+    body.editing .editable {
+      outline: 2px dashed var(--white-10);
+      outline-offset: 4px; border-radius: 8px; cursor: text;
+    }
+
+    body.editing .editable:focus {
+      outline-color: var(--coral); background: var(--white-05);
+    }
+
+    .choose-prompts-btn {
+      display: none;
+      width: 100%; padding: 14px;
+      border-radius: 16px;
+      font-size: 0.85rem; font-weight: 600;
+      background: var(--white-05);
+      border: 1px dashed var(--white-30);
+      color: var(--white-60);
+      cursor: pointer; font-family: inherit;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+      letter-spacing: 0.04em;
+      position: relative; z-index: 1;
+    }
+
+    .choose-prompts-btn:hover { border-color: var(--coral); color: var(--coral); }
+    body.editing .choose-prompts-btn { display: block; }
+
+    /* ===== PROMPT PICKER SHEET ===== */
+    .picker-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 200; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .picker-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .picker-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      max-height: 85svh;
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      z-index: 201;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex; flex-direction: column;
+    }
+
+    .picker-sheet.open { transform: translateY(0); }
+
+    .picker-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--white-10);
+      flex-shrink: 0;
+    }
+
+    .picker-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 700; font-size: 1.4rem;
+      margin-bottom: 4px;
+    }
+
+    .picker-count { font-size: 0.8rem; color: var(--white-60); }
+    .picker-count strong { color: var(--coral); font-weight: 700; }
+    .picker-count.maxed strong { color: var(--gold); }
+
+    .picker-list {
+      flex: 1; overflow-y: auto;
+      padding: 8px 24px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .picker-list::-webkit-scrollbar { display: none; }
+
+    .picker-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--white-05);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.2s;
+    }
+
+    .picker-item.disabled { opacity: 0.3; pointer-events: none; }
+
+    .picker-check {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid var(--white-30);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .picker-item.selected .picker-check {
+      background: var(--coral); border-color: var(--coral); transform: scale(1.1);
+    }
+
+    .picker-check svg {
+      width: 14px; height: 14px; stroke: var(--white);
+      opacity: 0; transition: opacity 0.2s;
+    }
+
+    .picker-item.selected .picker-check svg { opacity: 1; }
+    .picker-item-text { font-size: 0.95rem; font-weight: 400; line-height: 1.4; }
+
+    .picker-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--white-10);
+      display: flex; gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .picker-btn {
+      flex: 1; padding: 14px;
+      border-radius: 14px; border: none;
+      font-family: inherit; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .picker-btn-cancel { background: var(--white-05); color: var(--white-60); }
+    .picker-btn-confirm { background: var(--coral); color: var(--white); }
+    .picker-btn-confirm:disabled { opacity: 0.4; cursor: default; }
+
+    /* ===== THEME TOGGLE ICONS ===== */
+    #themeToggle .icon-moon { display: none; }
+    body.light #themeToggle .icon-sun { display: none; }
+    body.light #themeToggle .icon-moon { display: block; }
+
+    /* ===== LIGHT THEME ===== */
+    body.light {
+      --bg: #FAFAF9;
+      --surface: #FFFFFF;
+      --white: #1A1820;
+      --white-60: rgba(26, 24, 32, 0.6);
+      --white-30: rgba(26, 24, 32, 0.3);
+      --white-10: rgba(26, 24, 32, 0.08);
+      --white-05: rgba(26, 24, 32, 0.04);
+      --coral: #E8524E;
+      --coral-glow: rgba(232, 82, 78, 0.12);
+      --peach: #D4876F;
+      --gold: #C9A020;
+      --gold-glow: rgba(201, 160, 32, 0.12);
+      --sky: #2E94B8;
+      --sky-glow: rgba(46, 148, 184, 0.1);
+      --lavender: #7E6AAF;
+      --lavender-glow: rgba(126, 106, 175, 0.12);
+      --rose: #C46A88;
+      --rose-glow: rgba(196, 106, 136, 0.1);
+      --plum: #9E6BA8;
+      --sage: #5E9A62;
+      --sage-glow: rgba(94, 154, 98, 0.1);
+      --mint: #4A9E52;
+    }
+
+    body.light .topbar {
+      background: rgba(250, 250, 249, 0.88);
+      border-bottom-color: rgba(26, 24, 32, 0.06);
+    }
+
+    body.light .hero-avatar {
+      background: linear-gradient(135deg, var(--coral), var(--lavender));
+      color: #FAFAF9;
+    }
+
+    body.light .hero-glow-1 { opacity: 0.06; }
+    body.light .hero-glow-2 { opacity: 0.04; }
+    body.light .section-glow { opacity: 0.04 !important; }
+
+    body.light .card-hero .card-surface,
+    body.light .card-roots .card-surface,
+    body.light .card-edges .card-surface,
+    body.light .card-fire .card-surface,
+    body.light .card-compass .card-surface,
+    body.light .card-senses .card-surface,
+    body.light .card-chapters .card-surface,
+    body.light .card-now .card-surface {
+      background: var(--bg);
+    }
+
+    body.light .inner-card {
+      background: rgba(26, 24, 32, 0.03);
+      border-color: rgba(26, 24, 32, 0.08);
+    }
+
+    body.light .now-cell {
+      background: rgba(26, 24, 32, 0.03);
+      border-color: rgba(26, 24, 32, 0.08);
+    }
+
+    body.light .strength-track { background: rgba(26, 24, 32, 0.06); }
+    body.light .strength-bar { background: linear-gradient(90deg, var(--gold), var(--peach)); }
+
+    body.light .timeline::before {
+      background: linear-gradient(to bottom, var(--lavender), var(--lavender-glow), transparent);
+    }
+
+    body.light .tl-item::before {
+      background: var(--lavender);
+      box-shadow: 0 0 12px var(--lavender-glow);
+    }
+
+    body.light .picker-sheet { background: #FFFFFF; }
+    body.light .picker-item { border-bottom-color: rgba(26, 24, 32, 0.06); }
+    body.light .picker-check { border-color: rgba(26, 24, 32, 0.25); }
+    body.light .picker-item.selected .picker-check svg { stroke: #FAFAF9; }
+    body.light .picker-btn-cancel { background: rgba(26, 24, 32, 0.05); }
+    body.light .picker-overlay { background: rgba(0,0,0,0.3); }
+
+    body.light .edit-banner { color: #FAFAF9; }
+
+    body.light .footer-logo span { color: var(--coral); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (min-width: 480px) {
+      .hero-name { font-size: 3.5rem; }
+      .section-title { font-size: 3rem; }
+    }
+
+    @media (min-width: 768px) {
+      .section { max-width: 560px; }
+      .now-grid { grid-template-columns: 1fr 1fr 1fr; }
+      .picker-sheet { max-width: 480px; left: 50%; transform: translateX(-50%) translateY(100%); }
+      .picker-sheet.open { transform: translateX(-50%) translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.15s !important; }
+      .reveal { transition: none; opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-logo"><span>L</span>ayers</div>
+    <div class="topbar-actions">
+      <button class="btn-icon" id="themeToggle" aria-label="Toggle light/dark mode" title="Switch theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-sun">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-moon">
+          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+        </svg>
+      </button>
+      <button class="btn-icon" id="editToggle" aria-label="Toggle edit mode" title="Edit profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+      <button class="btn-icon" id="shareBtn" aria-label="Share" title="Share profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="edit-banner">Editing — tap fields to change, choose your prompts</div>
+
+  <!-- SIDE NAV -->
+  <nav class="side-nav" id="sideNav">
+    <div class="side-dot active" data-section="hero" data-label="Top"></div>
+    <div class="side-dot" data-section="roots" data-label="Roots"></div>
+    <div class="side-dot" data-section="edges" data-label="Edges"></div>
+    <div class="side-dot" data-section="fire" data-label="Fire"></div>
+    <div class="side-dot" data-section="compass" data-label="Compass"></div>
+    <div class="side-dot" data-section="senses" data-label="Senses"></div>
+    <div class="side-dot" data-section="chapters" data-label="Chapters"></div>
+    <div class="side-dot" data-section="now" data-label="Now"></div>
+  </nav>
+
+  <!-- PROMPT PICKER -->
+  <div class="picker-overlay" id="pickerOverlay"></div>
+  <div class="picker-sheet" id="pickerSheet">
+    <div class="picker-header">
+      <div class="picker-title" id="pickerTitle">Choose Your 5</div>
+      <div class="picker-count" id="pickerCount"><strong>0</strong> / 5 selected</div>
+    </div>
+    <div class="picker-list" id="pickerList"></div>
+    <div class="picker-footer">
+      <button class="picker-btn picker-btn-cancel" id="pickerCancel">Cancel</button>
+      <button class="picker-btn picker-btn-confirm" id="pickerConfirm">Apply</button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       CONTENT
+       ========================================== -->
+  <main>
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="hero-glow hero-glow-1"></div>
+      <div class="hero-glow hero-glow-2"></div>
+      <div class="hero-avatar">J</div>
+      <h1 class="hero-name editable" contenteditable="false">Jerick Evans</h1>
+      <p class="hero-tagline editable" contenteditable="false">Designer, experimenter, 45 countries deep and still curious</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-value editable" contenteditable="false">45</div><div class="hero-stat-label">Countries</div></div>
+        <div class="hero-stat"><div class="hero-stat-value editable" contenteditable="false">SGF</div><div class="hero-stat-label">Based</div></div>
+        <div class="hero-stat"><div class="hero-stat-value editable" contenteditable="false">he</div><div class="hero-stat-label">Pronouns</div></div>
+      </div>
+      <div class="scroll-hint">
+        <span>Scroll to know me</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </div>
+    </section>
+
+    <!-- ROOTS -->
+    <div class="section-divider div-roots"></div>
+    <section class="section" id="roots" data-facet="roots">
+      <div class="section-glow" style="background:var(--coral);top:-60px;right:-120px;opacity:0.08;"></div>
+      <div class="reveal"><span class="facet-tag tag-roots">01 / Roots</span></div>
+      <h2 class="section-title reveal reveal-delay-1">What I<br>Stand On</h2>
+      <p class="section-sub reveal reveal-delay-2">The things I won't bend on, even when it's hard.</p>
+      <button class="choose-prompts-btn reveal reveal-delay-3" data-facet="roots">Choose your 5 prompts</button>
+      <div class="facet-body reveal reveal-delay-3" id="body-roots"></div>
+    </section>
+
+    <!-- EDGES -->
+    <div class="section-divider div-edges"></div>
+    <section class="section" id="edges" data-facet="edges">
+      <div class="section-glow" style="background:var(--peach);bottom:-40px;left:-120px;opacity:0.07;"></div>
+      <div class="reveal"><span class="facet-tag tag-edges">02 / Edges</span></div>
+      <h2 class="section-title reveal reveal-delay-1">The Rough<br>Parts</h2>
+      <p class="section-sub reveal reveal-delay-2">Honest about what I'm still figuring out.</p>
+      <button class="choose-prompts-btn reveal reveal-delay-2" data-facet="edges">Choose your 5 prompts</button>
+      <div class="facet-body reveal reveal-delay-3" id="body-edges"></div>
+    </section>
+
+    <!-- FIRE -->
+    <div class="section-divider div-fire"></div>
+    <section class="section" id="fire" data-facet="fire">
+      <div class="section-glow" style="background:var(--gold);top:-40px;left:-100px;opacity:0.08;"></div>
+      <div class="reveal"><span class="facet-tag tag-fire">03 / Fire</span></div>
+      <h2 class="section-title reveal reveal-delay-1">What I<br>Bring</h2>
+      <p class="section-sub reveal reveal-delay-2">Strengths I trust. Things that light me up.</p>
+      <button class="choose-prompts-btn reveal reveal-delay-2" data-facet="fire">Choose your 5 prompts</button>
+      <div class="facet-body reveal reveal-delay-3" id="body-fire"></div>
+    </section>
+
+    <!-- COMPASS -->
+    <div class="section-divider div-compass"></div>
+    <section class="section" id="compass" data-facet="compass">
+      <div class="section-glow" style="background:var(--sky);top:20px;right:-100px;opacity:0.08;"></div>
+      <div class="reveal"><span class="facet-tag tag-compass">04 / Compass</span></div>
+      <h2 class="section-title reveal reveal-delay-1">Where I'm<br>Pointed</h2>
+      <p class="section-sub reveal reveal-delay-2">Not a plan — a direction.</p>
+      <button class="choose-prompts-btn reveal reveal-delay-2" data-facet="compass">Choose your 5 prompts</button>
+      <div class="facet-body reveal reveal-delay-3" id="body-compass"></div>
+    </section>
+
+    <!-- SENSES -->
+    <div class="section-divider div-senses"></div>
+    <section class="section" id="senses" data-facet="senses">
+      <div class="section-glow" style="background:var(--rose);bottom:-20px;right:-80px;opacity:0.08;"></div>
+      <div class="reveal"><span class="facet-tag tag-senses">05 / Senses</span></div>
+      <h2 class="section-title reveal reveal-delay-1">How I<br>Feel</h2>
+      <p class="section-sub reveal reveal-delay-2">The textures of being me.</p>
+      <button class="choose-prompts-btn reveal reveal-delay-2" data-facet="senses">Choose your 5 prompts</button>
+      <div class="facet-body reveal reveal-delay-3" id="body-senses"></div>
+    </section>
+
+    <!-- CHAPTERS -->
+    <div class="section-divider div-chapters"></div>
+    <section class="section" id="chapters" data-facet="chapters">
+      <div class="section-glow" style="background:var(--plum);top:-20px;left:-100px;opacity:0.08;"></div>
+      <div class="reveal"><span class="facet-tag tag-chapters">06 / Chapters</span></div>
+      <h2 class="section-title reveal reveal-delay-1">Moments<br>That Made Me</h2>
+      <p class="section-sub reveal reveal-delay-2">Not a resume. A reckoning.</p>
+      <button class="choose-prompts-btn reveal reveal-delay-2" data-facet="chapters">Choose your 5 prompts</button>
+      <div class="facet-body reveal reveal-delay-3" id="body-chapters"></div>
+    </section>
+
+    <!-- RIGHT NOW -->
+    <div class="section-divider div-now"></div>
+    <section class="section" id="now">
+      <div class="section-glow" style="background:var(--sage);bottom:-40px;right:-60px;opacity:0.1;"></div>
+      <div class="reveal"><span class="facet-tag tag-now">07 / Right Now</span></div>
+      <h2 class="section-title reveal reveal-delay-1">Today's<br>Version</h2>
+      <p class="section-sub reveal reveal-delay-2">What I'm into right this minute.</p>
+      <div class="now-grid reveal reveal-delay-3">
+        <div class="now-cell"><div class="now-emoji">&#127911;</div><div class="now-label">Listening to</div><div class="now-value editable" contenteditable="false">Dungeon Crawler Carl</div></div>
+        <div class="now-cell"><div class="now-emoji">&#128214;</div><div class="now-label">Reading</div><div class="now-value editable" contenteditable="false">Wind and Truth</div></div>
+        <div class="now-cell"><div class="now-emoji">&#128736;</div><div class="now-label">Building</div><div class="now-value editable" contenteditable="false">Fathom</div></div>
+        <div class="now-cell"><div class="now-emoji">&#128173;</div><div class="now-label">Thinking about</div><div class="now-value editable" contenteditable="false">What AI can actually do</div></div>
+        <div class="now-cell"><div class="now-emoji">&#127758;</div><div class="now-label">Countries</div><div class="now-value editable" contenteditable="false">45 and counting</div></div>
+        <div class="now-cell"><div class="now-emoji">&#127754;</div><div class="now-label">Missing</div><div class="now-value editable" contenteditable="false">Being underwater</div></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-logo"><span>L</span>ayers</div>
+      <p>a snapshot, not the whole story</p>
+    </footer>
+
+  </main>
+
+  <script>
+    // ==========================================
+    // PROMPT DATABASE — 25 per facet
+    // ==========================================
+    const PROMPTS = {
+      roots: [
+        "A value I'd never compromise on",
+        "What I believe about love",
+        "What I believe about money",
+        "A hill I will die on",
+        "The golden rule I live by",
+        "What honesty means to me",
+        "How I define loyalty",
+        "What spirituality means to me",
+        "What I believe about forgiveness",
+        "The cause I care most about",
+        "What family means to me",
+        "How I define success",
+        "What kindness looks like in practice",
+        "A tradition I hold sacred",
+        "What fairness means to me",
+        "Why vulnerability matters to me",
+        "The principle that guides my decisions",
+        "What community means to me",
+        "My relationship with work",
+        "What freedom means to me",
+        "A belief I changed my mind on",
+        "How trust is built",
+        "What I think I owe the world",
+        "What I find beautiful",
+        "The simplest truth I know"
+      ],
+      edges: [
+        "I'm working on...",
+        "I struggle with...",
+        "I can be...",
+        "My blindspot",
+        "I'm told I...",
+        "I shut down when...",
+        "I get defensive about...",
+        "A pattern I'm trying to break",
+        "The lie I tell myself most",
+        "What I avoid feeling",
+        "My worst habit",
+        "I overcompensate by...",
+        "I'm secretly afraid of...",
+        "Where I self-sabotage",
+        "The thing I pretend doesn't bother me",
+        "I need too much...",
+        "I need too little...",
+        "My relationship with control",
+        "When I'm stressed I...",
+        "Feedback that stung because it was true",
+        "What I'm not good at (and that's okay)",
+        "A boundary I struggle to set",
+        "My comfort zone trap",
+        "What I project onto others",
+        "The version of me I'm outgrowing"
+      ],
+      fire: [
+        "Making the complex feel simple",
+        "Reading a room (or a person)",
+        "Building things from nothing",
+        "Staying calm in chaos",
+        "Making strangers feel seen",
+        "Holding space for hard conversations",
+        "Finding humor in the dark",
+        "Connecting unlikely ideas",
+        "Asking the question no one else will",
+        "Following through when it gets boring",
+        "Seeing potential in people",
+        "Adapting on the fly",
+        "Teaching without condescending",
+        "Knowing when to walk away",
+        "Turning pain into something useful",
+        "Keeping a secret",
+        "Starting over without bitterness",
+        "Listening between the lines",
+        "Making something from very little",
+        "Showing up consistently",
+        "Giving honest feedback with care",
+        "Protecting people's energy",
+        "Playing the long game",
+        "Turning strangers into friends",
+        "Forgiving without keeping score"
+      ],
+      compass: [
+        "This week I'm focused on...",
+        "This month I want to...",
+        "This year I will...",
+        "This decade I hope to...",
+        "A skill I'm actively building",
+        "The life I'm designing",
+        "What I want to feel more of",
+        "What I want to feel less of",
+        "The relationship I'm building with myself",
+        "Where I want to be living",
+        "What I want my days to look like",
+        "The career I'm moving toward",
+        "Something I'm dying to learn",
+        "A conversation I need to have",
+        "The person I'm becoming",
+        "What I'm saving for",
+        "The habit I'm installing",
+        "A fear I'm walking toward",
+        "What I'd do with a free year",
+        "The creative project calling me",
+        "My definition of enough",
+        "What I want to give back",
+        "The community I want to build or join",
+        "What I want my legacy to be",
+        "The next version of me"
+      ],
+      senses: [
+        "My love language",
+        "I feel most alive when...",
+        "My guilty pleasure",
+        "How I experience intimacy",
+        "The music that moves me",
+        "What I notice first about someone",
+        "My relationship with touch",
+        "What comfort feels like to me",
+        "The taste I'd keep forever",
+        "What turns me on intellectually",
+        "The sound that calms me",
+        "How I flirt",
+        "What makes me feel beautiful",
+        "My morning ritual",
+        "The scent that takes me somewhere",
+        "How I show love",
+        "What I crave at midnight",
+        "The view I never get tired of",
+        "How I decompress",
+        "What makes me laugh until it hurts",
+        "The texture I always reach for",
+        "My relationship with food",
+        "What seduction means to me",
+        "The weather that matches my soul",
+        "How I want to be held"
+      ],
+      chapters: [
+        "The moment I grew up",
+        "A door that closed and changed everything",
+        "The first time I failed publicly",
+        "A stranger who altered my path",
+        "The year everything broke",
+        "When I found my people",
+        "The hardest goodbye",
+        "A risk that paid off",
+        "The moment I chose myself",
+        "When I learned what forgiveness really means",
+        "The work that defined me",
+        "A place that made me who I am",
+        "The relationship that taught me most",
+        "When I discovered what I love to do",
+        "The loss that shaped me",
+        "A promise I kept to myself",
+        "The first time I felt truly free",
+        "When I stood up for someone",
+        "The mistake I'm grateful for",
+        "A secret I finally told",
+        "The moment I found my voice",
+        "When I left something good for something real",
+        "The day I stopped pretending",
+        "A tradition I started",
+        "The version of me I left behind"
+      ]
+    };
+
+    const MAX_SELECTIONS = 5;
+
+    // ==========================================
+    // USER STATE — selected prompts + responses
+    // ==========================================
+    const userState = {
+      roots: {
+        selected: [0, 5, 10, 16, 24],
+        responses: {
+          0: "Radical honesty. Full stop. Say it, live it, or don't bother.",
+          5: "Saying the hard thing, even when it may cost. Never hide your truth.",
+          10: "Everything. They have had my back since I was a baby, and they continue to do so today and always.",
+          16: "Have I given this a try at least twice? Be the experimenter \u2014 do the thing that scares you if you know you will grow from it.",
+          24: "You are more alike with the stranger on the bus or in the airport than you are apart. Everyone has their destination \u2014 so enjoy the journey with those you meet."
+        }
+      },
+      edges: {
+        selected: [0, 7, 12, 15, 24],
+        responses: {
+          0: "Settling into stillness. I\u2019m wired to move, build, go \u2014 learning that rest isn\u2019t stalling.",
+          7: "Saying yes to every adventure. I\u2019m learning that depth can be its own kind of travel.",
+          12: "That the curiosity runs dry. That one day I wake up and stop wanting to know what\u2019s next.",
+          15: "Novelty. New places, new tools, new problems. I\u2019m learning to sit with the familiar too.",
+          24: "The one who thought he had to see every country to understand the world. Turns out you can find it in one conversation."
+        }
+      },
+      fire: {
+        selected: [0, 2, 7, 11, 23],
+        responses: { 0: 90, 2: 95, 7: 92, 11: 88, 23: 85 }
+      },
+      compass: {
+        selected: [2, 4, 12, 19, 24],
+        responses: {
+          2: "Go deeper with AI \u2014 understand what\u2019s actually possible, not just what\u2019s hyped. Ship something real.",
+          4: "Systems thinking at scale. I want to design at the level of organizations, not just screens.",
+          12: "How to build a product from zero that people actually need. The full stack of making something matter.",
+          19: "Fathom \u2014 a coastal monitoring platform that connects ocean data to the people who care about it most.",
+          24: "Someone who designs systems that outlive him. Who built things and loved people and never stopped experimenting."
+        }
+      },
+      senses: {
+        selected: [1, 4, 7, 17, 21],
+        responses: {
+          1: "Underwater. Neutrally buoyant, 60 feet down, watching a reef come alive. Nothing else exists.",
+          4: "Anything with weight. Post-rock, ambient, a good bassline. Music that gives you permission to feel.",
+          7: "A window seat, rain outside, a book I can\u2019t put down, and nowhere to be.",
+          17: "Ocean from a cliff. Mountains from a ridge. The view you earn by walking.",
+          21: "I cook the way I travel \u2014 no recipe, too much seasoning, always an experiment. Food is how I take care of people."
+        }
+      },
+      chapters: {
+        selected: [1, 7, 11, 12, 20],
+        responses: {
+          1: { year: "~2007", title: "Moved to San Diego from Seattle at 15", desc: "New city, new life. Everything I knew got reshuffled. Learned to adapt fast and make friends faster." },
+          7: { year: "High School", title: "Co-founded a multimedia business", desc: "Built something real before I could vote. It directly led to my career in design and business \u2014 and taught me I could make my own path." },
+          11: { year: "2012\u20132016", title: "Traveled the world every summer on a shoestring", desc: "45 countries and counting. Slept on trains, ate street food, got lost on purpose. Discovered that the world is smaller and kinder than anyone tells you." },
+          12: { year: "2021\u20132023", title: "M.Des + MBA at IIT in Chicago", desc: "Design school and business school at the same time. Fell in love with Chicago\u2019s art and music scene. Learned to think in systems." },
+          20: { year: "2026", title: "Springfield, MO \u2014 startup life and AI", desc: "Working at a startup, getting a firsthand look at what AI tools can actually do. Building, learning, experimenting every day." }
+        }
+      }
+    };
+
+    // ==========================================
+    // RENDER FACETS
+    // ==========================================
+    function renderFacet(facetKey) {
+      const container = document.getElementById(`body-${facetKey}`);
+      const state = userState[facetKey];
+      const prompts = PROMPTS[facetKey];
+      const isEditing = document.body.classList.contains('editing');
+
+      if (!state.selected.length) {
+        container.innerHTML = '<p style="color:var(--white-30);font-style:italic;text-align:center;padding:40px 0;">Tap "Choose your 5 prompts" above</p>';
+        return;
+      }
+
+      let html = '';
+
+      if (facetKey === 'fire') {
+        state.selected.forEach(idx => {
+          const pct = state.responses[idx] || 80;
+          html += `
+            <div class="strength">
+              <div class="strength-row"><span class="strength-name">${prompts[idx]}</span></div>
+              <div class="strength-track"><div class="strength-bar" style="--w:${pct}%"></div></div>
+            </div>`;
+        });
+      } else if (facetKey === 'chapters') {
+        html += '<div class="timeline">';
+        state.selected.forEach(idx => {
+          const r = state.responses[idx] || { year: '\u2014', title: prompts[idx], desc: '' };
+          html += `
+            <div class="tl-item">
+              <div class="tl-year${isEditing ? ' editable' : ''}" ${isEditing ? 'contenteditable="true"' : ''}>${r.year}</div>
+              <div class="tl-title${isEditing ? ' editable' : ''}" ${isEditing ? 'contenteditable="true"' : ''}>${r.title}</div>
+              <div class="tl-desc${isEditing ? ' editable' : ''}" ${isEditing ? 'contenteditable="true"' : ''}>${r.desc || (isEditing ? 'Tell the story...' : '')}</div>
+            </div>`;
+        });
+        html += '</div>';
+      } else {
+        state.selected.forEach(idx => {
+          const response = state.responses[idx] || '';
+          const placeholder = !response || response === 'Tap to write your response...';
+          html += `
+            <div class="inner-card">
+              <div class="inner-card-label">${prompts[idx]}</div>
+              <div class="inner-card-response${isEditing ? ' editable' : ''}" ${isEditing ? 'contenteditable="true"' : ''} data-facet="${facetKey}" data-prompt-idx="${idx}" ${placeholder ? 'style="color:var(--white-30);font-style:italic;"' : ''}>${response || (isEditing ? 'Tap to write your response...' : '')}</div>
+            </div>`;
+        });
+      }
+
+      container.innerHTML = html;
+    }
+
+    function renderAllFacets() {
+      Object.keys(PROMPTS).forEach(renderFacet);
+    }
+
+    // ==========================================
+    // SCROLL REVEAL
+    // ==========================================
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+
+    function observeReveals() {
+      document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    }
+
+    // Section-level observer for strength bars & nav
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // Update side nav
+          const id = entry.target.id;
+          document.querySelectorAll('.side-dot').forEach(dot => {
+            dot.classList.toggle('active', dot.dataset.section === id);
+          });
+        }
+      });
+    }, { threshold: 0.3 });
+
+    document.querySelectorAll('.section, .hero').forEach(s => sectionObserver.observe(s));
+
+    // Side nav clicks
+    document.querySelectorAll('.side-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const el = document.getElementById(dot.dataset.section);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    // ==========================================
+    // PROMPT PICKER
+    // ==========================================
+    const overlay = document.getElementById('pickerOverlay');
+    const sheet = document.getElementById('pickerSheet');
+    const pickerList = document.getElementById('pickerList');
+    const pickerTitle = document.getElementById('pickerTitle');
+    const pickerCount = document.getElementById('pickerCount');
+    const pickerConfirm = document.getElementById('pickerConfirm');
+    const pickerCancel = document.getElementById('pickerCancel');
+
+    let currentPickerFacet = null;
+    let tempSelections = new Set();
+
+    const FACET_LABELS = {
+      roots: 'Roots', edges: 'Edges', fire: 'Fire',
+      compass: 'Compass', senses: 'Senses', chapters: 'Chapters'
+    };
+
+    function openPicker(facetKey) {
+      currentPickerFacet = facetKey;
+      tempSelections = new Set(userState[facetKey].selected);
+      pickerTitle.textContent = `${FACET_LABELS[facetKey]} \u2014 Choose 5`;
+      renderPickerList();
+      updatePickerCount();
+      overlay.classList.add('open');
+      sheet.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePicker() {
+      overlay.classList.remove('open');
+      sheet.classList.remove('open');
+      document.body.style.overflow = '';
+      currentPickerFacet = null;
+    }
+
+    function renderPickerList() {
+      const prompts = PROMPTS[currentPickerFacet];
+      const atMax = tempSelections.size >= MAX_SELECTIONS;
+
+      pickerList.innerHTML = prompts.map((prompt, i) => {
+        const sel = tempSelections.has(i);
+        const dis = atMax && !sel;
+        return `
+          <div class="picker-item${sel ? ' selected' : ''}${dis ? ' disabled' : ''}" data-idx="${i}">
+            <div class="picker-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <span class="picker-item-text">${prompt}</span>
+          </div>`;
+      }).join('');
+    }
+
+    function updatePickerCount() {
+      const c = tempSelections.size;
+      pickerCount.innerHTML = `<strong>${c}</strong> / ${MAX_SELECTIONS} selected`;
+      pickerCount.classList.toggle('maxed', c >= MAX_SELECTIONS);
+    }
+
+    pickerList.addEventListener('click', (e) => {
+      const item = e.target.closest('.picker-item');
+      if (!item || item.classList.contains('disabled')) return;
+      const idx = parseInt(item.dataset.idx);
+      if (tempSelections.has(idx)) tempSelections.delete(idx);
+      else if (tempSelections.size < MAX_SELECTIONS) tempSelections.add(idx);
+      renderPickerList();
+      updatePickerCount();
+    });
+
+    pickerConfirm.addEventListener('click', () => {
+      if (!currentPickerFacet) return;
+      const facet = currentPickerFacet;
+      const newSelected = Array.from(tempSelections).sort((a, b) => a - b);
+      const newResponses = {};
+      newSelected.forEach(idx => {
+        if (userState[facet].responses[idx] !== undefined) {
+          newResponses[idx] = userState[facet].responses[idx];
+        } else {
+          if (facet === 'fire') newResponses[idx] = 80;
+          else if (facet === 'chapters') newResponses[idx] = { year: '\u2014', title: PROMPTS[facet][idx], desc: '' };
+          else newResponses[idx] = '';
+        }
+      });
+      userState[facet].selected = newSelected;
+      userState[facet].responses = newResponses;
+      renderFacet(facet);
+      observeReveals();
+      closePicker();
+    });
+
+    pickerCancel.addEventListener('click', closePicker);
+    overlay.addEventListener('click', closePicker);
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.choose-prompts-btn');
+      if (btn) openPicker(btn.dataset.facet);
+    });
+
+    // Save inline edits
+    document.addEventListener('focusout', (e) => {
+      const el = e.target;
+      if (!el.classList.contains('inner-card-response')) return;
+      const facet = el.dataset.facet;
+      const idx = parseInt(el.dataset.promptIdx);
+      const text = el.textContent.trim();
+      if (facet && userState[facet]) {
+        userState[facet].responses[idx] = (text === 'Tap to write your response...') ? '' : text;
+        if (text && text !== 'Tap to write your response...') {
+          el.style.color = ''; el.style.fontStyle = '';
+        }
+      }
+    });
+
+    document.addEventListener('focusin', (e) => {
+      const el = e.target;
+      if (el.classList.contains('inner-card-response') && el.textContent.trim() === 'Tap to write your response...') {
+        el.textContent = ''; el.style.color = ''; el.style.fontStyle = '';
+      }
+    });
+
+    // ==========================================
+    // EDIT MODE
+    // ==========================================
+    document.getElementById('editToggle').addEventListener('click', () => {
+      const isEditing = document.body.classList.toggle('editing');
+      document.getElementById('editToggle').classList.toggle('active', isEditing);
+      document.querySelectorAll('.editable').forEach(el => {
+        el.contentEditable = isEditing ? 'true' : 'false';
+      });
+      renderAllFacets();
+      observeReveals();
+    });
+
+    // Theme toggle
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    // Share
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Layers \u2014 Jerick Evans', text: 'Get to know me.', url: window.location.href }); } catch {}
+      } else {
+        await navigator.clipboard?.writeText(window.location.href);
+        const btn = document.getElementById('shareBtn');
+        btn.style.background = 'var(--mint)'; btn.style.borderColor = 'var(--mint)';
+        setTimeout(() => { btn.style.background = ''; btn.style.borderColor = ''; }, 1500);
+      }
+    });
+
+    // ==========================================
+    // INIT
+    // ==========================================
+    renderAllFacets();
+    observeReveals();
+  </script>
+</body>
+</html>
